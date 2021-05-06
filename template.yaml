@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ine-difusores
+
+  Sample SAM Template for ine-difusores
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 59
+    MemorySize: 1024
+    
+
+Resources:
+  DifusoresFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: difusores_lambda/
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      Events:
+        CWSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: 'rate(5 minutes)'
+            Name: ScheduleDifusores
+            Description: schedule
+            Enabled: False
+      Policies:
+      - Statement:
+        - Sid: S3PubObjectPolicy
+          Effect: Allow
+          Action:
+          - s3:*
+          Resource: ['arn:aws:s3:::ine-difusores-aws','arn:aws:s3:::ine-difusores-aws/','arn:aws:s3:::ine-difusores-aws/*']
+      - Statement:
+        - Sid: CloudFrontInvalidationPolicy
+          Effect: Allow
+          Action:
+          - cloudfront:CreateInvalidation
+          Resource: 'arn:aws:cloudfront::353094482358:distribution/EGR12FIAAYULY'
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  
+  DifusoresFunction:
+    Description: "Esta lambda descargará el archivo zip del INE y los colocará en el S3 del difusor, además limpiará el cache del cloud front."
+    Value: !GetAtt DifusoresFunction.Arn 
